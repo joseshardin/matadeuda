@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es" itemscope itemtype="https://schema.org/WebApplication">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor Inteligente de Deudas | Planificador Financiero</title>
+    <meta name="description" content="Herramienta gratuita para gestionar deudas, calcular estrategias de ahorro y planificar tu libertad financiera">
+    <meta name="keywords" content="gestor de deudas, planificador financiero, estrategias de ahorro, finanzas personales">
+    <link rel="canonical" href="https://matadeuda.netlify.app">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://matadeuda.netlify.app">
+    <meta property="og:title" content="Gestor Inteligente de Deudas">
+    <meta property="og:description" content="Herramienta gratuita para gestionar deudas y planificar tu libertad financiera">
+    
+    <!-- Twitter -->
+    <!-- <meta name="twitter:card" content="summary_large_image"> -->
+    <meta name="twitter:title" content="Gestor Inteligente de Deudas">
+    <meta name="twitter:description" content="Herramienta gratuita para gestionar deudas y planificar tu libertad financiera">
+    
+    <style>
+        :root {
+            --color-primary: #3498db;
+            --color-secondary: #2ecc71;
+            --color-background: #f4f4f4;
+            --color-text: #333;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+        }
+        .title {
+            text-align: center;
+            color: var(--color-primary);
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        #resultado {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .estrategias {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" itemscope itemtype="https://schema.org/FinancialService">
+        <h1 class="title" itemprop="name">Gestor Inteligente de Deudas</h1>
+        
+        <div class="input-group">
+            <label for="moneda">Moneda</label>
+            <select id="moneda">
+                <option value="PEN">Soles (PEN)</option>
+                <option value="USD">Dólares (USD)</option>
+                <option value="EUR">Euros (EUR)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="deudaTotal">Deuda Total</label>
+            <input type="number" id="deudaTotal" placeholder="Ingresa tu deuda total" required>
+        </div>
+
+        <div class="input-group">
+            <label for="ingresos">Ingresos Mensuales</label>
+            <input type="number" id="ingresos" placeholder="Tus ingresos mensuales" required>
+        </div>
+
+        <div class="input-group">
+            <label for="gastos">Gastos Básicos Mensuales</label>
+            <input type="number" id="gastos" placeholder="Gastos de casa y necesidades" required>
+        </div>
+
+        <button onclick="calcularEstrategias()" class="btn">Generar Plan de Ahorro</button>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        function calcularEstrategias() {
+            const moneda = document.getElementById('moneda').value;
+            const deudaTotal = parseFloat(document.getElementById('deudaTotal').value);
+            const ingresos = parseFloat(document.getElementById('ingresos').value);
+            const gastos = parseFloat(document.getElementById('gastos').value);
+
+            if (isNaN(deudaTotal) || isNaN(ingresos) || isNaN(gastos)) {
+                alert('Por favor, completa todos los campos correctamente');
+                return;
+            }
+
+            const disponibleParaDeuda = ingresos - gastos;
+            const mesesParaPagar = Math.ceil(deudaTotal / disponibleParaDeuda);
+            const pagoMensual = disponibleParaDeuda * 0.5;
+            const ahorroMensual = disponibleParaDeuda * 0.3;
+            const porcentajeIngreso = ((disponibleParaDeuda / ingresos) * 100).toFixed(2);
+
+            const estrategias = [
+                'Método de la Bola de Nieve: Concentra pagos en la deuda más pequeña',
+                'Método Avalancha: Paga primero la deuda con mayor interés',
+                'Reducir gastos no esenciales en un 20%',
+                'Buscar fuentes de ingreso adicional'
+            ];
+
+            const simboloMoneda = {
+                'PEN': 'S/',
+                'USD': '$',
+                'EUR': '€'
+            }[moneda];
+
+            const htmlResultado = `
+                <h2>Plan de Ahorro Personalizado</h2>
+                <p>💸 Pago Mensual: ${simboloMoneda}${pagoMensual.toFixed(2)}</p>
+                <p>💰 Ahorro Mensual: ${simboloMoneda}${ahorroMensual.toFixed(2)}</p>
+                <p>⏰ Meses para Pagar Deuda: ${mesesParaPagar}</p>
+                <p>📊 Porcentaje de Ingresos: ${porcentajeIngreso}%</p>
+                
+                <h3>Estrategias de Ahorro:</h3>
+                <ul class="estrategias">
+                    ${estrategias.map(e => `<li>${e}</li>`).join('')}
+                </ul>
+
+                <div style="margin-top: 15px; text-align: center;">
+                    <button onclick="exportarPlan()" class="btn" style="display: inline-block; width: auto; padding: 10px 20px; margin-right: 10px;">📄 Exportar Plan</button>
+                    <button onclick="compartirWhatsApp()" class="btn" style="display: inline-block; width: auto; padding: 10px 20px;">📱 Compartir</button>
+                </div>
+            `;
+
+            document.getElementById('resultado').innerHTML = htmlResultado;
+        }
+
+        function exportarPlan() {
+            const resultado = document.getElementById('resultado').innerText;
+            const blob = new Blob([resultado], { type: 'text/plain' });
+            const enlace = document.createElement('a');
+            enlace.href = URL.createObjectURL(blob);
+            enlace.download = 'Plan_Gestion_Deuda.txt';
+            document.body.appendChild(enlace);
+            enlace.click();
+            document.body.removeChild(enlace);
+        }
+
+        function compartirWhatsApp() {
+            const resultado = document.getElementById('resultado').innerText;
+            const url = `https://wa.me/?text=${encodeURIComponent(resultado)}`;
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>
