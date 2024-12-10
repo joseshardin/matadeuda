@@ -47,7 +47,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 500px;
+            max-width: 700px;
             padding: 30px;
         }
         .title {
@@ -78,15 +78,20 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-top: 10px;
         }
         .btn:hover {
             background-color: #2980b9;
         }
-        #resultado {
+        #resultado, #graficoContainer {
             margin-top: 20px;
             background-color: #f9f9f9;
             padding: 15px;
             border-radius: 5px;
+        }
+        #graficoContainer {
+            text-align: center;
+            overflow-x: auto;
         }
         .estrategias {
             list-style-type: disc;
@@ -128,9 +133,19 @@
             <input type="number" id="gastos" placeholder="Gastos de casa y necesidades" required>
         </div>
 
+        <div class="input-group">
+            <label for="fechaInicial">Fecha Inicial de Pago</label>
+            <input type="date" id="fechaInicial" required>
+        </div>
+
         <button onclick="calcularEstrategias()" class="btn">Generar Plan de Ahorro</button>
 
         <div id="resultado"></div>
+        <div id="graficoContainer">
+            <svg id="pagosMensualesChart" width="600" height="300" xmlns="http://www.w3.org/2000/svg">
+                <text x="300" y="150" text-anchor="middle" fill="#888">El gráfico aparecerá aquí</text>
+            </svg>
+        </div>
     </div>
 
     <script>
@@ -139,8 +154,9 @@
             const deudaTotal = parseFloat(document.getElementById('deudaTotal').value);
             const ingresos = parseFloat(document.getElementById('ingresos').value);
             const gastos = parseFloat(document.getElementById('gastos').value);
+            const fechaInicial = new Date(document.getElementById('fechaInicial').value);
 
-            if (isNaN(deudaTotal) || isNaN(ingresos) || isNaN(gastos)) {
+            if (isNaN(deudaTotal) || isNaN(ingresos) || isNaN(gastos) || !fechaInicial) {
                 alert('Por favor, completa todos los campos correctamente');
                 return;
             }
@@ -178,15 +194,83 @@
 
                 <div style="margin-top: 15px; text-align: center;">
                     <button onclick="exportarPlan()" class="btn" style="display: inline-block; width: auto; padding: 10px 20px; margin-right: 10px;">📄 Exportar Plan</button>
-                    <button onclick="compartirWhatsApp()" class="btn" style="display: inline-block; width: auto; padding: 10px 20px;">📱 Compartir</button>
+                    <button onclick="exportarGrafico()" class="btn" style="display: inline-block; width: auto; padding: 10px 20px;">📊 Exportar Gráfico</button>
+                    <button onclick="compartirWhatsApp()" class="btn" style="display: inline-block; width: auto; padding: 10px 20px; margin-left: 10px;">📱 Compartir</button>
                 </div>
             `;
 
             document.getElementById('resultado').innerHTML = htmlResultado;
+
+            // Crear gráfico de pagos mensuales con SVG
+            const svg = document.getElementById('pagosMensualesChart');
+            svg.innerHTML = ''; // Limpiar SVG anterior
+
+            const pagosMensuales = [];
+            let saldoRestante = deudaTotal;
+            for (let i = 0; i < mesesParaPagar; i++) {
+                saldoRestante -= pagoMensual;
+                pagosMensuales.push(Math.max(saldoRestante, 0));
+            }
+
+            const width = 600;
+            const height = 300;
+            const padding = 40;
+            const maxSaldo = Math.max(...pagosMensuales);
+            const maxBarWidth = width - 2 * padding;
+            const barWidth = Math.min(50, maxBarWidth / mesesParaPagar);
+            const scaleFactor = (height - 2 * padding) / maxSaldo;
+
+            // Crear eje X
+            const xAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            xAxis.setAttribute('x1', padding);
+            xAxis.setAttribute('y1', height - padding);
+            xAxis.setAttribute('x2', width - padding);
+            xAxis.setAttribute('y2', height - padding);
+            xAxis.setAttribute('stroke', '#333');
+            svg.appendChild(xAxis);
+
+            // Crear eje Y
+            const yAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            yAxis.setAttribute('x1', padding);
+            yAxis.setAttribute('y1', padding);
+            yAxis.setAttribute('x2', padding);
+            yAxis.setAttribute('y2', height - padding);
+            yAxis.setAttribute('stroke', '#333');
+            svg.appendChild(yAxis);
+
+            // Crear barras
+            pagosMensuales.forEach((saldo, index) => {
+                const bar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                bar.setAttribute('x', padding + index * (barWidth + 5));
+                bar.setAttribute('y', height - padding - saldo * scaleFactor);
+                bar.setAttribute('width', barWidth);
+                bar.setAttribute('height', saldo * scaleFactor);
+                bar.setAttribute('fill', 'rgba(52, 152, 219, 0.6)');
+                svg.appendChild(bar);
+
+                // Añadir etiquetas de meses
+                const mes = new Date(fechaInicial.getFullYear(), fechaInicial.getMonth() + index, 1);
+                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                label.setAttribute('x', padding + index * (barWidth + 5) + barWidth / 2);
+                label.setAttribute('y', height - 10);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('font-size', '10');
+                label.textContent = mes.toLocaleString('default', { month: 'short' });
+                svg.appendChild(label);
+            });
+
+            // Título
+            const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            title.setAttribute('x', width / 2);
+            title.setAttribute('y', 20);
+            title.setAttribute('text-anchor', 'middle');
+            title.setAttribute('font-weight', 'bold');
+            title.textContent = 'Evolución de Deuda Mensual';
+            svg.appendChild(title);
         }
 
         function exportarPlan() {
-            const resultado = document.getElementById('resultado').innerText;
+            const resultado = document.getElementById('resultado').innerText + '\n\nDetalle de Pagos Mensuales:\n';
             const blob = new Blob([resultado], { type: 'text/plain' });
             const enlace = document.createElement('a');
             enlace.href = URL.createObjectURL(blob);
@@ -196,11 +280,35 @@
             document.body.removeChild(enlace);
         }
 
+        function exportarGrafico() {
+            const svg = document.getElementById('pagosMensualesChart');
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const canvas = document.createElement("canvas");
+            const svgSize = svg.getBoundingClientRect();
+            canvas.width = svgSize.width;
+            canvas.height = svgSize.height;
+            const ctx = canvas.getContext("2d");
+            
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0);
+                const pngImage = canvas.toDataURL("image/png");
+                const enlace = document.createElement('a');
+                enlace.download = 'Grafico_Pagos_Deuda.png';
+                enlace.href = pngImage;
+                enlace.click();
+            };
+            img.src = "data:image/svg+xml;base64," + btoa(svgData);
+        }
+
         function compartirWhatsApp() {
             const resultado = document.getElementById('resultado').innerText;
             const url = `https://wa.me/?text=${encodeURIComponent(resultado)}`;
             window.open(url, '_blank');
         }
+
+        // Establecer fecha inicial como el mes actual
+        document.getElementById('fechaInicial').valueAsDate = new Date();
     </script>
 </body>
 </html>
